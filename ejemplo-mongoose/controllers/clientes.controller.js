@@ -1,16 +1,23 @@
 import { responseSuccess, responseError } from '../helpers/response.helper.js';
-import joi from 'joi';
+import mongoose from 'mongoose';
 import { getClientes, postCliente } from '../services/clientes.service.js'
 
-const schemaCliente = joi.object({
-  primerNombre: joi.string().min(5).max(50).required(),
-  segundoNombre: joi.string().optional(),
-  primerApellido: joi.string().min(5).max(50).required(),
-  segundoApellido: joi.string().optional(),
-  nit: joi.string().required(),
-  email: joi.string().email().required(),
-  direcciones: joi.array().required(),
-  telefonos: joi.array().required()
+
+const { schemaClient } = mongoose; // Nota: mongoose tiene un objeto llamado Schema
+
+// Definición de un nuevo esquema
+const newSchema = mongoose;
+
+// Esquema del Cliente con Destructuring
+const { schemaCliente } = newSchema  ({
+  primerNombre: String,
+  segundoNombre: String,
+  primerApellido: String,
+  segundoApellido: String,
+  nit: String,
+  email: String,
+  direcciones: Array,
+  telefonos: Array
 });
 
 //Handler para el metodo get de todos los clientes
