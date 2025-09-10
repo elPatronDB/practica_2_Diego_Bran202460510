@@ -15,26 +15,23 @@ const loginHandler = async (req, res) => {
     const { error, values } = schemaAuth.validate(data, { abortEarly: false });
 
     if(error){
-      return res.status(400).json("Credenciales incorrectas.");
+      return res.status(400).json(responseError("Credenciales incorrectas."));
     }
 
-    const token = await login(data);
-    console.log('token',token)
+    const result = await login(data);
     
-    res.status(200).json(responseSuccess("success", token));
+    res.status(200).json(responseSuccess("Login exitoso", result));
   } catch (error) {
     let errorCode = 500;
     let errorMessage = 'INTERNAL_SERVER_ERROR';
     switch(error.code){
-      case 'DATA_NOT_FOUND':
-        errorCode = 404;
-        errorMessage = error.code;
+      case 'AUTH_ERROR':
+        errorCode = 401;
+        errorMessage = error.message;
         break;
     }
 
-    return res.status(errorCode).json({
-      message: errorMessage
-    });
+    return res.status(errorCode).json(responseError(errorMessage));
   }
 }
 

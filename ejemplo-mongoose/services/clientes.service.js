@@ -1,32 +1,59 @@
-import { getDb } from '../configs/mongodb.config.js';
+import Cliente from '../models/Cliente.js';
 
 const getClientes = async () => {
-  const db = getDb();
-  const clientes = await db.collection('clientes').find().toArray();
-  
-  if (!clientes){
-    const error = new Error('DATA_NOT_FOUND');
-    error.code('DATA_NOT_FOUND');
-    throw error;
-  }
+  try {
+    const clientes = await Cliente.find();
+    
+    if (!clientes || clientes.length === 0) {
+      const error = new Error('No se encontraron clientes');
+      error.code = 'DATA_NOT_FOUND';
+      throw error;
+    }
 
-  return clientes;
+    return clientes;
+  } catch (error) {
+    if (error.code === 'DATA_NOT_FOUND') {
+      throw error;
+    }
+    throw new Error('Error al obtener clientes: ' + error.message);
+  }
 }
 
 const postCliente = async (data) => {
-  const db = getDb();
+  try {
+    // Verificar si ya existe un cliente con el mismo NIT
+    const clienteExistente = await Cliente.findOne({ nit: data.nit });
+    
+    if (clienteExistente) {
+      const error = new Error('Ya existe un cliente con este NIT');
+      error.code = 'DATA_EXISTS';
+      throw error;
+    }
 
-  const cliente = await db.collection('clientes').findOne({nit: data.nit});
-
-  if (cliente){
-    const error = new Error('AUTH_ERROR');
-    error.code = 'AUTH_ERROR';
-    throw error;
+    // Verificar si ya existe un cliente con el mismo email
+    const emailExistente = await Cliente.findOne({ email: data.email });
+    
+    if (emailExistente) {
+      const error = new Error('Ya existe un cliente con este email');
+      error.code = 'DATA_EXISTS';
+      throw error;
+    }
+    
+    const nuevoCliente = new Cliente(data);
+    const clienteGuardado = await nuevoCliente.save();
+    
+    return clienteGuardado._id;
+  } catch (error) {
+    if (error.code === 'DATA_EXISTS') {
+      throw error;
+    }
+    if (error.name === 'ValidationError') {
+      const error = new Error('Datos de cliente inválidos: ' + Object.values(error.errors).map(e => e.message).join(', '));
+      error.code = 'VALIDATION_ERROR';
+      throw error;
+    }
+    throw new Error('Error al crear cliente: ' + error.message);
   }
-  
-  const nuevoCliente = await db.collection('clientes').insertOne(data);
-  
-  return nuevoCliente.insertedId;
 }
 
 export { 
